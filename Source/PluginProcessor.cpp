@@ -17,6 +17,7 @@ const StringRef BasicSynth::OUTPUT           = "output";
 
 BasicSynth::BasicSynth() :
     AudioProcessor(BusesProperties().withOutput("Output", AudioChannelSet::stereo(), true)),
+    synthAudioSource(keyboardState),
     parameters(*this, nullptr)
 {
     // Filter Parameters
@@ -57,6 +58,7 @@ BasicSynth::BasicSynth() :
         true,  // isAutomatableParameter
         true   // isDiscrete
     );
+    filterMode = parameters.getRawParameterValue(FILTER_MODE);
 
     parameters.createAndAddParameter(
         FILTER_CUTOFF,
@@ -67,26 +69,29 @@ BasicSynth::BasicSynth() :
         nullptr,
         nullptr
     );
+    filterCutoff = parameters.getRawParameterValue(FILTER_CUTOFF);
 
     parameters.createAndAddParameter(
         FILTER_RESONANCE,
         "Filter Resonance",
         "%",
-        NormalisableRange<float>(0.0f, 100.0f),
+        NormalisableRange<float>(0.0f, 1.0f),
         0.0f,
         nullptr,
         nullptr
     );
+    filterResonance = parameters.getRawParameterValue(FILTER_RESONANCE);
 
     parameters.createAndAddParameter(
         FILTER_DRIVE,
         "Filter Drive",
-        "%",
+        "",
         NormalisableRange<float>(1.0f, 10.0f),
         1.0f,
         nullptr,
         nullptr
     );
+    filterDrive = parameters.getRawParameterValue(FILTER_DRIVE);
 
     // Reverb Controls
     // =============================================================================================
@@ -100,26 +105,29 @@ BasicSynth::BasicSynth() :
         nullptr,
         nullptr
     );
+    reverbRoomSize = parameters.getRawParameterValue(REVERB_ROOM_SIZE);
 
     parameters.createAndAddParameter(
         REVERB_DAMPING,
         "Reverb Damping",
         "%",
-        NormalisableRange<float>(0.0f, 100.0f),
+        NormalisableRange<float>(0.0f, 1.0f),
         0.0f,
         nullptr,
         nullptr
     );
+    reverbDamping = parameters.getRawParameterValue(REVERB_DAMPING);
 
     parameters.createAndAddParameter(
         REVERB_WIDTH,
         "Reverb Width",
         "%",
-        NormalisableRange<float>(0.0f, 100.0f),
+        NormalisableRange<float>(0.0f, 1.0f),
         0.0f,
         nullptr,
         nullptr
     );
+    reverbWidth = parameters.getRawParameterValue(REVERB_WIDTH);
 
     parameters.createAndAddParameter(
         REVERB_FREEZE,
@@ -130,26 +138,29 @@ BasicSynth::BasicSynth() :
         nullptr,
         nullptr
     );
+    reverbFreeze = parameters.getRawParameterValue(REVERB_FREEZE);
 
     parameters.createAndAddParameter(
         REVERB_DRY,
         "Reverb Dry Level",
         "%",
-        NormalisableRange<float>(0.0f, 100.0f),
-        100.0f,
+        NormalisableRange<float>(0.0f, 1.0f),
+        1.0f,
         nullptr,
         nullptr
     );
+    reverbDry = parameters.getRawParameterValue(REVERB_DRY);
 
     parameters.createAndAddParameter(
         REVERB_WET,
         "Reverb Wet Level",
         "%",
-        NormalisableRange<float>(0.0f, 100.0f),
-        50.0f,
+        NormalisableRange<float>(0.0f, 1.0f),
+        0.5f,
         nullptr,
         nullptr
     );
+    reverbWet = parameters.getRawParameterValue(REVERB_WET);
 
     // Output Control
     // =============================================================================================
@@ -163,6 +174,7 @@ BasicSynth::BasicSynth() :
         nullptr,
         nullptr
     );
+    output = parameters.getRawParameterValue(OUTPUT);
 
     parameters.state = ValueTree("Basic Synth");
 }
@@ -222,14 +234,38 @@ void BasicSynth::changeProgramName(int index, const String& newName)
 
 void BasicSynth::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
+    dsp::ProcessSpec spec;
+    spec.sampleRate       = sampleRate;
+    spec.maximumBlockSize = (uint32)samplesPerBlock;
+    spec.numChannels      = 2;
+
+    ladderFilter.reset();
+
+    // TODO: Filter mode
+
+    ladderFilter.setCutoffFrequencyHz(*filterCutoff);
+    ladderFilter.setResonance(*filterResonance);
+    ladderFilter.setDrive(*filterDrive);
+    ladderFilter.prepare(spec);
+
+    reverb.reset();
+    Reverb::Parameters reverbParams;
+    reverbParams.roomSize   = *reverbRoomSize;
+    reverbParams.damping    = *reverbDamping;
+    reverbParams.wetLevel   = *reverbWet;
+    reverbParams.dryLevel   = *reverbDry;
+    reverbParams.freezeMode = *reverbFreeze;
+    reverb.setParameters(reverbParams);
+    reverb.prepare(spec);
+
+    synthAudioSource.prepareToPlay(samplesPerBlock, sampleRate);
 }
 
 void BasicSynth::releaseResources()
 {
-    // When playback stops, you can use this as an opportunity to free up any
-    // spare memory, etc.
+    ladderFilter.reset();
+    reverb.reset();
+    synthAudioSource.releaseResources();
 }
 
 bool BasicSynth::isBusesLayoutSupported(const BusesLayout& layouts) const
@@ -258,18 +294,26 @@ void BasicSynth::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiMessag
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    {
-        auto* channelData = buffer.getWritePointer (channel);
+    synthAudioSource.getNextAudioBlock(AudioSourceChannelInfo(buffer));
 
-        // ..do something to the data...
-    }
+    dsp::AudioBlock<float> block(buffer);
+    dsp::ProcessContextReplacing<float> context = dsp::ProcessContextReplacing<float>(block);
+
+    ladderFilter.setCutoffFrequencyHz(*filterCutoff);
+    ladderFilter.setResonance(*filterResonance);
+    ladderFilter.setDrive(*filterDrive);
+    ladderFilter.process(context);
+
+    Reverb::Parameters reverbParams;
+    reverbParams.roomSize   = *reverbRoomSize;
+    reverbParams.damping    = *reverbDamping;
+    reverbParams.wetLevel   = *reverbWet;
+    reverbParams.dryLevel   = *reverbDry;
+    reverbParams.freezeMode = *reverbFreeze;
+    reverb.setParameters(reverbParams);
+    reverb.process(context);
+
+    buffer.applyGain(Decibels::decibelsToGain(*output));
 }
 
 bool BasicSynth::hasEditor() const

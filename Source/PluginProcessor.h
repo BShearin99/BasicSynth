@@ -2,6 +2,8 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 
+#include "Synth.h"
+
 struct BasicSynth  : public AudioProcessor
 {
     static const StringRef FILTER_MODE;
@@ -51,5 +53,24 @@ struct BasicSynth  : public AudioProcessor
     void getStateInformation (MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+    SynthAudioSource synthAudioSource;
+
+    dsp::LadderFilter<float> ladderFilter;
+    dsp::Reverb reverb;
+
     AudioProcessorValueTreeState parameters;
+
+    float *filterMode,
+          *filterCutoff,
+          *filterResonance,
+          *filterDrive,
+          *reverbRoomSize,
+          *reverbDamping,
+          *reverbWidth,
+          *reverbFreeze,
+          *reverbDry,
+          *reverbWet,
+          *output;
+
+    MidiKeyboardState keyboardState;
 };

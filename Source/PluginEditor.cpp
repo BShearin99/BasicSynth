@@ -4,7 +4,7 @@
 BasicSynthEditor::BasicSynthEditor(BasicSynth &p)
     : AudioProcessorEditor(&p),
       processor(p),
-      keyboardComponent(keyboardState, MidiKeyboardComponent::horizontalKeyboard)
+      keyboardComponent(processor.keyboardState, MidiKeyboardComponent::horizontalKeyboard)
 {
     tooltipWindow->setOpaque(false);
 
@@ -20,6 +20,7 @@ BasicSynthEditor::BasicSynthEditor(BasicSynth &p)
     menu->addItem(3, "Lowpass 24dB");
     menu->addItem(4, "Highpass 24dB");
 
+    filterMode.setWantsKeyboardFocus(false);
     filterSection.addAndMakeVisible(filterMode);
 
     comboBoxAttachments.add(
@@ -30,6 +31,7 @@ BasicSynthEditor::BasicSynthEditor(BasicSynth &p)
     cutoff.setTooltip("Cutoff");
     cutoff.setSliderStyle(Slider::RotaryHorizontalVerticalDrag);
     cutoff.setTextBoxStyle(Slider::NoTextBox, true, 0, 0);
+    cutoff.setWantsKeyboardFocus(false);
     filterSection.addAndMakeVisible(cutoff);
 
     sliderAttachments.add(
@@ -40,6 +42,7 @@ BasicSynthEditor::BasicSynthEditor(BasicSynth &p)
     resonance.setTooltip("Resonance");
     resonance.setSliderStyle(Slider::RotaryHorizontalVerticalDrag);
     resonance.setTextBoxStyle(Slider::NoTextBox, true, 0, 0);
+    resonance.setWantsKeyboardFocus(false);
     filterSection.addAndMakeVisible(resonance);
 
     sliderAttachments.add(
@@ -50,6 +53,7 @@ BasicSynthEditor::BasicSynthEditor(BasicSynth &p)
     drive.setTooltip("Drive");
     drive.setSliderStyle(Slider::RotaryHorizontalVerticalDrag);
     drive.setTextBoxStyle(Slider::NoTextBox, true, 0, 0);
+    drive.setWantsKeyboardFocus(false);
     filterSection.addAndMakeVisible(drive);
 
     sliderAttachments.add(
@@ -66,6 +70,7 @@ BasicSynthEditor::BasicSynthEditor(BasicSynth &p)
     roomSize.setTooltip("Room Size");
     roomSize.setSliderStyle(Slider::RotaryHorizontalVerticalDrag);
     roomSize.setTextBoxStyle(Slider::NoTextBox, true, 0, 0);
+    roomSize.setWantsKeyboardFocus(false);
     reverbSection.addAndMakeVisible(roomSize);
 
     sliderAttachments.add(
@@ -76,6 +81,7 @@ BasicSynthEditor::BasicSynthEditor(BasicSynth &p)
     damping.setTooltip("Damping");
     damping.setSliderStyle(Slider::RotaryHorizontalVerticalDrag);
     damping.setTextBoxStyle(Slider::NoTextBox, true, 0, 0);
+    damping.setWantsKeyboardFocus(false);
     reverbSection.addAndMakeVisible(damping);
 
     sliderAttachments.add(
@@ -86,6 +92,7 @@ BasicSynthEditor::BasicSynthEditor(BasicSynth &p)
     width.setTooltip("Width");
     width.setSliderStyle(Slider::RotaryHorizontalVerticalDrag);
     width.setTextBoxStyle(Slider::NoTextBox, true, 0, 0);
+    width.setWantsKeyboardFocus(false);
     reverbSection.addAndMakeVisible(width);
 
     sliderAttachments.add(
@@ -94,6 +101,7 @@ BasicSynthEditor::BasicSynthEditor(BasicSynth &p)
 
     freeze.setName("Freeze");
     freeze.setButtonText("Freeze");
+    freeze.setWantsKeyboardFocus(false);
     reverbSection.addAndMakeVisible(freeze);
 
     buttonAttachments.add(
@@ -104,6 +112,7 @@ BasicSynthEditor::BasicSynthEditor(BasicSynth &p)
     dryLevel.setTooltip("Dry");
     dryLevel.setSliderStyle(Slider::RotaryHorizontalVerticalDrag);
     dryLevel.setTextBoxStyle(Slider::NoTextBox, true, 0, 0);
+    dryLevel.setWantsKeyboardFocus(false);
     reverbSection.addAndMakeVisible(dryLevel);
 
     sliderAttachments.add(
@@ -114,6 +123,7 @@ BasicSynthEditor::BasicSynthEditor(BasicSynth &p)
     wetLevel.setTooltip("Wet");
     wetLevel.setSliderStyle(Slider::RotaryHorizontalVerticalDrag);
     wetLevel.setTextBoxStyle(Slider::NoTextBox, true, 0, 0);
+    wetLevel.setWantsKeyboardFocus(false);
     reverbSection.addAndMakeVisible(wetLevel);
 
     sliderAttachments.add(
@@ -131,6 +141,7 @@ BasicSynthEditor::BasicSynthEditor(BasicSynth &p)
     outputGain.setSliderStyle(Slider::LinearVertical);
     outputGain.setPopupDisplayEnabled(true, true, nullptr);
     outputGain.setTextBoxStyle(Slider::NoTextBox, true, 0, 0);
+    outputGain.setWantsKeyboardFocus(false);
     outputSection.addAndMakeVisible(outputGain);
 
     sliderAttachments.add(

@@ -33,12 +33,9 @@ struct BasicSynthEditor : public AudioProcessorEditor
     Slider outputGain;
     GroupComponent outputSection;
 
-    MidiKeyboardState keyboardState;
     MidiKeyboardComponent keyboardComponent;
 
     ComboBox midiInputList;
-
-    // =============================================================================================
 
     OwnedArray<SliderAttachment>   sliderAttachments;
     OwnedArray<ComboBoxAttachment> comboBoxAttachments;

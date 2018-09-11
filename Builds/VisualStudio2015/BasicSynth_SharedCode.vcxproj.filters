@@ -2259,6 +2259,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Source\Synth.h">
+      <Filter>BasicSynth\Source</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\PluginProcessor.h">
       <Filter>BasicSynth\Source</Filter>
     </ClInclude>

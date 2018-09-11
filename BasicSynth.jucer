@@ -4,6 +4,7 @@
               pluginCharacteristicsValue="pluginEditorRequiresKeys,pluginIsSynth,pluginWantsMidiIn">
   <MAINGROUP id="UMmQ0I" name="BasicSynth">
     <GROUP id="{E8D015E8-F460-1B0E-2491-5DDF84E6D718}" name="Source">
+      <FILE id="Dn4OwW" name="Synth.h" compile="0" resource="0" file="Source/Synth.h"/>
       <FILE id="Hv30yn" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
       <FILE id="EDx91V" name="PluginProcessor.h" compile="0" resource="0"
