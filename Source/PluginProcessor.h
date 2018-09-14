@@ -72,5 +72,7 @@ struct BasicSynth  : public AudioProcessor
           *reverbWet,
           *output;
 
+    float lastFilterMode;
+
     MidiKeyboardState keyboardState;
 };

@@ -241,7 +241,16 @@ void BasicSynth::prepareToPlay(double sampleRate, int samplesPerBlock)
 
     ladderFilter.reset();
 
-    // TODO: Filter mode
+    if (*filterMode < 1.0f)
+        ladderFilter.setMode(dsp::LadderFilter<float>::Mode::LPF12);
+    else if (*filterMode < 2.0f)
+        ladderFilter.setMode(juce::dsp::LadderFilter<float>::Mode::HPF12);
+    else if (*filterMode < 3.0f)
+        ladderFilter.setMode(juce::dsp::LadderFilter<float>::Mode::LPF24);
+    else
+        ladderFilter.setMode(juce::dsp::LadderFilter<float>::Mode::HPF24);
+
+    lastFilterMode = *filterMode;
 
     ladderFilter.setCutoffFrequencyHz(*filterCutoff);
     ladderFilter.setResonance(*filterResonance);
@@ -298,6 +307,20 @@ void BasicSynth::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiMessag
 
     dsp::AudioBlock<float> block(buffer);
     dsp::ProcessContextReplacing<float> context = dsp::ProcessContextReplacing<float>(block);
+
+    if (lastFilterMode != *filterMode)
+    {
+        if (*filterMode < 1.0f)
+            ladderFilter.setMode(dsp::LadderFilter<float>::Mode::LPF12);
+        else if (*filterMode < 2.0f)
+            ladderFilter.setMode(juce::dsp::LadderFilter<float>::Mode::HPF12);
+        else if (*filterMode < 3.0f)
+            ladderFilter.setMode(juce::dsp::LadderFilter<float>::Mode::LPF24);
+        else
+            ladderFilter.setMode(juce::dsp::LadderFilter<float>::Mode::HPF24);
+
+        lastFilterMode = *filterMode;
+    }
 
     ladderFilter.setCutoffFrequencyHz(*filterCutoff);
     ladderFilter.setResonance(*filterResonance);
