@@ -7,9 +7,12 @@ typedef AudioProcessorValueTreeState::SliderAttachment   SliderAttachment;
 typedef AudioProcessorValueTreeState::ComboBoxAttachment ComboBoxAttachment;
 typedef AudioProcessorValueTreeState::ButtonAttachment   ButtonAttachment;
 
-struct BasicSynthEditor : public AudioProcessorEditor
+struct BasicSynthEditor : public AudioProcessorEditor,
+                          public Timer
 {
     BasicSynthEditor(BasicSynth&);
+
+    void timerCallback() override;
 
     void paint(Graphics&) override;
     void resized() override;
@@ -34,8 +37,6 @@ struct BasicSynthEditor : public AudioProcessorEditor
     GroupComponent outputSection;
 
     MidiKeyboardComponent keyboardComponent;
-
-    ComboBox midiInputList;
 
     OwnedArray<SliderAttachment>   sliderAttachments;
     OwnedArray<ComboBoxAttachment> comboBoxAttachments;

@@ -150,7 +150,7 @@ BasicSynthEditor::BasicSynthEditor(BasicSynth &p)
 
     addAndMakeVisible(outputSection);
 
-    // Keyboard & MIDI Input
+    // Keyboard
     // =============================================================================================
 
     const juce::Colour colour = getLookAndFeel().findColour(Slider::thumbColourId);
@@ -158,11 +158,16 @@ BasicSynthEditor::BasicSynthEditor(BasicSynth &p)
     keyboardComponent.setColour(MidiKeyboardComponent::mouseOverKeyOverlayColourId, colour.withAlpha(0.5f));
     addAndMakeVisible(keyboardComponent);
 
-    addAndMakeVisible(midiInputList);
-
     // =============================================================================================
 
+    startTimerHz(1);
+
     setSize(800, 300);
+}
+
+void BasicSynthEditor::timerCallback()
+{
+    keyboardComponent.grabKeyboardFocus();
 }
 
 void BasicSynthEditor::paint (Graphics& g)
@@ -204,11 +209,7 @@ void BasicSynthEditor::resized()
             .reduced(0, pad / 2)
     );
 
-    midiInputList.setBounds(
-        bounds
-            .removeFromBottom(30)
-            .reduced(0, pad / 2)
-    );
+    bounds.removeFromBottom(30);
 
     // Output Controls
     // =============================================================================================
