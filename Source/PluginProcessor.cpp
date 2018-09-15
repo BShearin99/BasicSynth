@@ -23,13 +23,26 @@ BasicSynth::BasicSynth() :
     // Filter Parameters
     // =============================================================================================
     parameters.createAndAddParameter(
+        // We pass the static ID string we created above to create our parameter
         FILTER_MODE,
+
+        // Assign a formatted name string for the label
         "Filter Mode",
+
+        // This argument is for the parameter's unit label. We leave it empty since the filter
+        // mode does not use units
         "",
-        // NOTE: JUCE 5.3.2 still has the ComboBoxAttachment bug which requires
+
+        // NOTE: JUCE 5.3.2 has a ComboBoxAttachment bug which requires
         // us to use a starting value of 0 here, rather than map it 1-4
         NormalisableRange<float>(0.0f, 3.0f, 1.0f),
+
+        // This is the starting default value for our parameter
         0.0f,
+
+        // createAndAddParameter() accepts lambdas/functors for converting between a numeric
+        // value and a formatted string representation. Here we check which position our parameter
+        // is at and return the correct filter mode name.
         [](float value)
         {
             switch ((int)value)
@@ -41,6 +54,9 @@ BasicSynth::BasicSynth() :
                 default: return "";
             }
         },
+
+        // The inverse is that we get passed text and convert it back to a numeric value. If a user
+        // were to type in "Highpass 12dB" into a text entry for the parameter it would map to 1.0f.
         [](const String &text)
         {
             if (text == "Lowpass 12dB")
@@ -54,6 +70,11 @@ BasicSynth::BasicSynth() :
             else
                 return 0.0f;
         },
+
+        // Here we mark specficic attributes about the parameter. The first two default to false
+        // and true already, but we must mark this parameter as discrete so the host knows that
+        // it should use stepped values
+
         false, // isMetaParameter
         true,  // isAutomatableParameter
         true   // isDiscrete
@@ -234,6 +255,11 @@ void BasicSynth::changeProgramName(int index, const String& newName)
 
 void BasicSynth::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
+    // This function is called whenever the "transport" changes. In a Digital Audio Workstation
+    // this happens when you move the playhead. Here in our standalone plugin it only happens
+    // when the plugin starts up or if the sample rate or block size are changed.
+
+    // ProcessSpec is a struct that holds information about our current audio processing.
     dsp::ProcessSpec spec;
     spec.sampleRate       = sampleRate;
     spec.maximumBlockSize = (uint32)samplesPerBlock;
@@ -280,7 +306,7 @@ void BasicSynth::releaseResources()
 bool BasicSynth::isBusesLayoutSupported(const BusesLayout& layouts) const
 {
     // This is the place where you check if the layout is supported.
-    // In this template code we only support mono or stereo.
+    // In this plugin we only support mono or stereo.
     if (layouts.getMainOutputChannelSet() != AudioChannelSet::mono()
      && layouts.getMainOutputChannelSet() != AudioChannelSet::stereo())
         return false;
@@ -290,7 +316,6 @@ bool BasicSynth::isBusesLayoutSupported(const BusesLayout& layouts) const
 
 void BasicSynth::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiMessages)
 {
-    ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
@@ -303,8 +328,11 @@ void BasicSynth::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiMessag
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
+    // Request the next audio block from our synthesizer audio source. This will parse the current
+    // MIDI messages and fill the audio buffer with the synthesized audio signal
     synthAudioSource.getNextAudioBlock(AudioSourceChannelInfo(buffer));
 
+    // When using juce::dsp classes we have to pass our audio buffer as a ProcessContext
     dsp::AudioBlock<float> block(buffer);
     dsp::ProcessContextReplacing<float> context = dsp::ProcessContextReplacing<float>(block);
 
@@ -351,6 +379,8 @@ AudioProcessorEditor* BasicSynth::createEditor()
 
 void BasicSynth::getStateInformation(MemoryBlock& destData)
 {
+    // The AudioProcessorValueTreeState class has functions that let us easily store our
+    // plugin parameter values as XML data
     auto state = parameters.copyState();
     ScopedPointer<XmlElement> xml(state.createXml());
     copyXmlToBinary(*xml, destData);
@@ -366,7 +396,6 @@ void BasicSynth::setStateInformation(const void* data, int sizeInBytes)
 }
 
 //==============================================================================
-// This creates new instances of the plugin..
 AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new BasicSynth();

@@ -14,6 +14,7 @@ BasicSynthEditor::BasicSynthEditor(BasicSynth &p)
     filterMode.setName("Mode");
     filterMode.setTooltip("Mode");
 
+    // We can add our combobox menu items by using getRootMenu() to retrieve our PopupMenu
     PopupMenu *menu = filterMode.getRootMenu();
     menu->addItem(1, "Lowpass 12dB");
     menu->addItem(2, "Highpass 12dB");
@@ -27,13 +28,24 @@ BasicSynthEditor::BasicSynthEditor(BasicSynth &p)
         new ComboBoxAttachment(processor.parameters, BasicSynth::FILTER_MODE, filterMode)
     );
 
+    // We set the name of our components in the constructor so we can use them for drawing text
+    // later in our paint() method
     cutoff.setName("Cutoff");
     cutoff.setTooltip("Cutoff");
+
+    // The RotaryHorizontalVerticalDrag style allows the knob to be dragged along either axis
     cutoff.setSliderStyle(Slider::RotaryHorizontalVerticalDrag);
+
+    // We hide all the text boxes in our UI using Slider::NoTextBox
     cutoff.setTextBoxStyle(Slider::NoTextBox, true, 0, 0);
+
+    // We also set all components to not want keyboard focus, so our piano component
+    // can catch all key presses
     cutoff.setWantsKeyboardFocus(false);
+
     filterSection.addAndMakeVisible(cutoff);
 
+    // The SliderAttachment class keeps our slider in sync with one of our parameters.
     sliderAttachments.add(
         new SliderAttachment(processor.parameters, BasicSynth::FILTER_CUTOFF, cutoff)
     );
@@ -153,40 +165,57 @@ BasicSynthEditor::BasicSynthEditor(BasicSynth &p)
     // Keyboard
     // =============================================================================================
 
-    const juce::Colour colour = getLookAndFeel().findColour(Slider::thumbColourId);
+    // The LookAndFeel associated with our components stores colors by unique identifiers. Each
+    // Component has a enum of ColourIDs that it uses to associate part of its drawing with a color.
+    // Here we match our keyboard's overlay to the color of our slider thumbs.
+    const Colour colour = getLookAndFeel().findColour(Slider::thumbColourId);
     keyboardComponent.setColour(MidiKeyboardComponent::keyDownOverlayColourId,      colour);
     keyboardComponent.setColour(MidiKeyboardComponent::mouseOverKeyOverlayColourId, colour.withAlpha(0.5f));
     addAndMakeVisible(keyboardComponent);
 
     // =============================================================================================
 
+    // Start a timer so our piano grabs keyboard focus every second
     startTimerHz(1);
 
+    // We set our size at the end of our constructor so our resized() method is called to set up
+    // our layout
     setSize(800, 300);
 }
 
 void BasicSynthEditor::timerCallback()
 {
+    // Have the piano component continuously grab keyboard focus so that our keypresses always
+    // trigger notes.
     keyboardComponent.grabKeyboardFocus();
 }
 
 void BasicSynthEditor::paint (Graphics& g)
 {
+    // Our component is opaque so we must fill the entire context with a color
     g.fillAll(findColour(ResizableWindow::backgroundColourId));
 
-    Slider *sliders[8] = {
-        &cutoff, &resonance, &drive,
-        &roomSize, &damping, &width, &dryLevel, &wetLevel
-    };
-
-    g.setColour(Colours::white);
+    // Use the default font - in white - with a height of 10px
     g.setFont(10);
+    g.setColour(Colours::white);
+
+
+    // We iterate over the sliders, using the name we set for each to draw text inside of them
+    Slider *sliders[8] = {
+        &cutoff,   &resonance, &drive,
+        &roomSize, &damping,   &width,
+        &dryLevel, &wetLevel
+    };
 
     for (auto slider : sliders)
     {
         g.drawText(
             slider->getName(),
+
+            // Because our sliders are inside of group components we need to get the local area
+            // relative to our main editor
             getLocalArea(slider, slider->getLocalBounds()),
+
             Justification::centred
         );
     }
@@ -194,6 +223,13 @@ void BasicSynthEditor::paint (Graphics& g)
 
 void BasicSynthEditor::resized()
 {
+    /* This function is called every time the editor has its size set.
+       We set up the layout of our child components here.
+
+        Here we get the local bounds of our editor (0, 0, this->width, this->height) and use
+        juce::Rectangle<int>::removeFrom...() to cut off sections from the rectangle and return them.
+    */
+
     const int pad = 6;
 
     Rectangle<int> bounds = getLocalBounds().reduced(pad);
