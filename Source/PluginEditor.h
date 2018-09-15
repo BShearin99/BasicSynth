@@ -3,6 +3,7 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "PluginProcessor.h"
 
+// These names are pretty long, so define some typedefs to shorten up our typing
 typedef AudioProcessorValueTreeState::SliderAttachment   SliderAttachment;
 typedef AudioProcessorValueTreeState::ComboBoxAttachment ComboBoxAttachment;
 typedef AudioProcessorValueTreeState::ButtonAttachment   ButtonAttachment;
